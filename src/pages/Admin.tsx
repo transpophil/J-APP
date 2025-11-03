@@ -342,65 +342,77 @@ export default function Admin() {
               </Button>
             </div>
 
-            {/* Active Tasks */}
+            {/* Active Tasks - Show all tasks except completed ones */}
             <div className="space-y-3">
               <h3 className="text-lg font-semibold text-foreground">Active Tasks</h3>
-              {tasks.filter(t => t.status !== "completed" && t.status !== "on_board").length === 0 ? (
+              {tasks.filter(t => t.status !== "completed").length === 0 ? (
                 <Card className="p-6 text-center text-muted-foreground">
                   No active tasks
                 </Card>
               ) : (
-                tasks.filter(t => t.status !== "completed" && t.status !== "on_board").map((task) => (
-                  <Card key={task.id} className="p-4">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-lg">{task.task_name || "Unnamed Task"}</h3>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          <span className="font-medium">Passenger:</span> {task.passenger_name}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          <span className="font-medium">From:</span> {task.pickup_location}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          <span className="font-medium">To:</span> {task.dropoff_location}
-                        </p>
-                        {task.notes && (
+                tasks.filter(t => t.status !== "completed").map((task) => {
+                  const driver = drivers.find(d => d.id === task.driver_id);
+                  return (
+                    <Card key={task.id} className="p-4">
+                      <div className="flex justify-between items-start">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <h3 className="font-semibold text-lg">{task.task_name || "Unnamed Task"}</h3>
+                            <Badge variant={task.status === "available" ? "default" : "secondary"}>
+                              {task.status}
+                            </Badge>
+                          </div>
                           <p className="text-sm text-muted-foreground mt-1">
-                            <span className="font-medium">Notes:</span> {task.notes}
+                            <span className="font-medium">Passenger:</span> {task.passenger_name}
                           </p>
-                        )}
-                        <p className="text-sm mt-2">
-                          <span className="font-medium">Status:</span>{" "}
-                          <span className={task.status === "available" ? "text-green-600" : "text-blue-600"}>
-                            {task.status}
-                          </span>
-                        </p>
+                          <p className="text-sm text-muted-foreground">
+                            <span className="font-medium">From:</span> {task.pickup_location}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            <span className="font-medium">To:</span> {task.dropoff_location}
+                          </p>
+                          {task.notes && (
+                            <p className="text-sm text-muted-foreground mt-1">
+                              <span className="font-medium">Notes:</span> {task.notes}
+                            </p>
+                          )}
+                          {driver && (
+                            <p className="text-sm text-muted-foreground mt-1">
+                              <span className="font-medium">Driver:</span> {driver.name}
+                            </p>
+                          )}
+                          {task.eta && (
+                            <p className="text-sm text-muted-foreground mt-1">
+                              <span className="font-medium">ETA:</span> {task.eta}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="icon"
+                            variant="outline"
+                            onClick={() => {
+                              setEditingTask(task);
+                              setTaskForm({
+                                passenger_name: task.passenger_name || "",
+                                pickup_location: task.pickup_location || "",
+                                dropoff_location: task.dropoff_location || "",
+                                task_name: task.task_name || "",
+                                notes: task.notes || "",
+                              });
+                              setShowTaskDialog(true);
+                            }}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button size="icon" variant="destructive" onClick={() => deleteTask(task.id)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex gap-2">
-                        <Button
-                          size="icon"
-                          variant="outline"
-                          onClick={() => {
-                            setEditingTask(task);
-                            setTaskForm({
-                              passenger_name: task.passenger_name || "",
-                              pickup_location: task.pickup_location || "",
-                              dropoff_location: task.dropoff_location || "",
-                              task_name: task.task_name || "",
-                              notes: task.notes || "",
-                            });
-                            setShowTaskDialog(true);
-                          }}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button size="icon" variant="destructive" onClick={() => deleteTask(task.id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </Card>
-                ))
+                    </Card>
+                  );
+                })
               )}
             </div>
 
