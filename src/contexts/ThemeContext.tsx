@@ -45,16 +45,6 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     };
   }, []);
 
-  // Add/remove a helpful class on <html> for subtle background styling
-  useEffect(() => {
-    const root = document.documentElement;
-    if (christmasEnabled) {
-      root.classList.add("christmas-enabled");
-    } else {
-      root.classList.remove("christmas-enabled");
-    }
-  }, [christmasEnabled]);
-
   async function setChristmasEnabled(enabled: boolean) {
     setChristmasEnabledState(enabled);
     await supabase
