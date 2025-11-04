@@ -338,18 +338,16 @@ export default function Dashboard() {
       toast({ title: "Bitte zuerst Passagiere auswählen", variant: "destructive" });
       return;
     }
-    const selectedPassengerData = passengers.filter(p => selectedPassengers.includes(p.id));
-    if (selectedPassengerData.length === 0) {
+    // Orte in der Reihenfolge der Auswahl bestimmen
+    const orderedLocations = selectedPassengers
+      .map((id) => passengers.find((p) => p.id === id)?.default_pickup_location)
+      .filter((loc): loc is string => Boolean(loc));
+    if (orderedLocations.length === 0) {
       toast({ title: "Keine Passagiere ausgewählt", variant: "destructive" });
       return;
     }
-    const locations = selectedPassengerData.map(p => p.default_pickup_location).filter(Boolean);
-    if (locations.length === 0) {
-      toast({ title: "Ausgewählte Passagiere haben keinen Abholort", variant: "destructive" });
-      return;
-    }
-    const destination = locations[locations.length - 1];
-    const waypointList = locations.slice(0, -1);
+    const destination = orderedLocations[orderedLocations.length - 1];
+    const waypointList = orderedLocations.slice(0, -1);
 
     const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
     const isAndroid = /Android/i.test(navigator.userAgent);
@@ -367,8 +365,12 @@ export default function Dashboard() {
     const tryDeepLink = (origin?: string) => {
       // iOS: Google Maps App Deep Link
       if (isIOS) {
+        // iOS unterstützt mehrere Stopps über daddr mit "+to:"-Ketten
+        const daddrChain = (waypointList.length > 0 ? [...waypointList, destination] : [destination])
+          .map((addr) => encodeURIComponent(addr))
+          .join("+to:");
         const deepUrl =
-          `comgooglemaps://?daddr=${encodeURIComponent(destination)}&directionsmode=driving` +
+          `comgooglemaps://?directionsmode=driving&daddr=${daddrChain}` +
           (origin ? `&saddr=${encodeURIComponent(origin)}` : "");
         // Fallback nach kurzer Zeit zur Web-Route
         const fallbackUrl = buildWebUrl(origin);
@@ -378,14 +380,9 @@ export default function Dashboard() {
         }, 800);
         return;
       }
-      // Android: Google Maps Navigation Deep Link
+      // Android: Verwende die Web-URL mit waypoints; öffnet i. d. R. die App
       if (isAndroid) {
-        const deepUrl = `google.navigation:q=${encodeURIComponent(destination)}&mode=d`;
-        const fallbackUrl = buildWebUrl(origin);
-        window.location.href = deepUrl;
-        setTimeout(() => {
-          window.location.href = fallbackUrl;
-        }, 800);
+        window.location.href = buildWebUrl(origin);
         return;
       }
       // Desktop/sonstige: direkt Web-Route
