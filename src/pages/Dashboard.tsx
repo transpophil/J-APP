@@ -17,11 +17,14 @@ import { TaskNotificationBell } from "@/components/TaskNotificationBell";
 import { AvailableTasksSection } from "@/components/AvailableTasksSection";
 import logo from "@/assets/j-app-logo.jpg";
 import backgroundImage from "@/assets/background-image.png";
+import { useTheme } from "@/contexts/ThemeContext";
+import ChristmasLandscape from "@/components/ChristmasLandscape";
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { currentDriver, logout } = useDriver();
   const { toast } = useToast();
+  const { christmasEnabled } = useTheme();
   const [currentTask, setCurrentTask] = useState<any>(null);
   const [passengers, setPassengers] = useState<any[]>([]);
   const [selectedPassengers, setSelectedPassengers] = useState<string[]>([]);
@@ -372,12 +375,22 @@ export default function Dashboard() {
   if (!currentDriver) return null;
 
   return (
-    <div 
+    <div
       className="min-h-screen bg-cover bg-center bg-fixed relative"
-      style={{ backgroundImage: `url(${backgroundImage})` }}
+      style={{ backgroundImage: christmasEnabled ? undefined : `url(${backgroundImage})` }}
     >
       {/* Overlay for readability */}
-      <div className="absolute inset-0 bg-gradient-to-br from-background/90 via-background/80 to-background/90 backdrop-blur-[2px]" />
+      {christmasEnabled ? (
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage:
+              "linear-gradient(to bottom, hsl(220 60% 12%), hsl(220 50% 8%), hsl(0 0% 0%))",
+          }}
+        />
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-br from-background/90 via-background/80 to-background/90 backdrop-blur-[2px]" />
+      )}
       
       {/* Content */}
       <div className="relative z-10">
@@ -402,6 +415,11 @@ export default function Dashboard() {
           </div>
         </div>
       </header>
+
+      {/* Christmas Landscape separator */}
+      <div className="py-4">
+        <ChristmasLandscape />
+      </div>
 
       <div className="container mx-auto px-4 py-8 max-w-3xl space-y-8">
         {/* SECTION 1: Admin Tasks - Standalone */}
@@ -662,7 +680,6 @@ export default function Dashboard() {
       </Dialog>
 
       </div>
-    </div>
     </div>
   );
 }

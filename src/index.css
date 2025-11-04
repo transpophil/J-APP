@@ -50,8 +50,8 @@ All colors MUST be HSL.
 
 /* Optional: slightly cooler background tint when theme is enabled (kept subtle) */
 html.christmas-enabled body {
-  background-image: radial-gradient(ellipse at top, rgba(255,255,255,0.12), transparent 60%),
-    radial-gradient(ellipse at bottom, rgba(240,248,255,0.12), transparent 60%);
+  background-image: linear-gradient(to bottom, hsl(220 60% 12%), hsl(220 50% 8%), hsl(0 0% 0%));
+  background-color: hsl(220 60% 12%);
 }
 
 /* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
@@ -102,7 +102,7 @@ All colors MUST be HSL.
 
     --sidebar-primary: 240 5.9% 10%;
 
-    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-primary-foreground: 0 0% 100%;
 
     --sidebar-accent: 240 4.8% 95.9%;
 
