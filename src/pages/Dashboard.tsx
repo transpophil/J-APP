@@ -338,35 +338,59 @@ export default function Dashboard() {
       toast({ title: "Please select passengers first", variant: "destructive" });
       return;
     }
-
     const selectedPassengerData = passengers.filter(p => selectedPassengers.includes(p.id));
     if (selectedPassengerData.length === 0) {
       toast({ title: "No passengers selected", variant: "destructive" });
       return;
     }
-
-    // Create waypoints from passenger locations
-    const waypoints = selectedPassengerData.map(p => 
-      encodeURIComponent(p.default_pickup_location)
-    ).join('/');
-
-    // Create Google Maps URL
-    const mapsUrl = `https://www.google.com/maps/dir/${waypoints}`;
-
-    // Try to open in Google Maps app first, fallback to browser
-    const appUrl = `google.navigation:q=${encodeURIComponent(selectedPassengerData[0].default_pickup_location)}`;
-    
-    // Create hidden iframe to try opening the app
-    const iframe = document.createElement('iframe');
-    iframe.style.display = 'none';
-    iframe.src = appUrl;
-    document.body.appendChild(iframe);
-    
-    // After a short delay, redirect to web version if app didn't open
-    setTimeout(() => {
-      document.body.removeChild(iframe);
-      window.open(mapsUrl, '_blank');
-    }, 1000);
+    const locations = selectedPassengerData.map(p => p.default_pickup_location).filter(Boolean);
+    if (locations.length === 0) {
+      toast({ title: "Selected passengers have no pickup locations", variant: "destructive" });
+      return;
+    }
+    const destination = locations[locations.length - 1];
+    const waypointList = locations.slice(0, -1);
+    // Use the driver's current position as origin when possible
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude, longitude } = pos.coords;
+          const origin = `${latitude},${longitude}`;
+          const mapsUrl =
+            `https://www.google.com/maps/dir/?api=1` +
+            `&origin=${encodeURIComponent(origin)}` +
+            `&destination=${encodeURIComponent(destination)}` +
+            (waypointList.length > 0
+              ? `&waypoints=${encodeURIComponent(waypointList.join("|"))}`
+              : "") +
+            `&travelmode=driving`;
+          window.open(mapsUrl, "_blank");
+        },
+        () => {
+          // Fallback: open route without explicit origin
+          const mapsUrl =
+            `https://www.google.com/maps/dir/?api=1` +
+            `&destination=${encodeURIComponent(destination)}` +
+            (waypointList.length > 0
+              ? `&waypoints=${encodeURIComponent(waypointList.join("|"))}`
+              : "") +
+            `&travelmode=driving`;
+          toast({ title: "Couldn't access current location", description: "Opening route without fixed start." });
+          window.open(mapsUrl, "_blank");
+        },
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
+      );
+    } else {
+      // Geolocation not supported
+      const mapsUrl =
+        `https://www.google.com/maps/dir/?api=1` +
+        `&destination=${encodeURIComponent(destination)}` +
+        (waypointList.length > 0
+          ? `&waypoints=${encodeURIComponent(waypointList.join("|"))}`
+          : "") +
+        `&travelmode=driving`;
+      window.open(mapsUrl, "_blank");
+    }
   }
 
   if (!currentDriver) return null;
