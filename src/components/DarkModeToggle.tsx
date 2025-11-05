@@ -16,7 +16,7 @@ const DarkModeToggle = () => {
   const isDark = mounted ? resolvedTheme === "dark" : false;
 
   return (
-    <div className="fixed top-3 left-3 z-50">
+    <div className="fixed bottom-3 left-3 z-50">
       <div className="flex items-center gap-2 rounded-full bg-card/80 backdrop-blur-md border border-border px-3 py-2 shadow-sm">
         <div className="flex items-center justify-center w-5 h-5">
           {isDark ? (
