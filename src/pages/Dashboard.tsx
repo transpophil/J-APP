@@ -429,8 +429,8 @@ export default function Dashboard() {
           <div className="flex items-start gap-4">
             <img src={logo} alt="App Logo" className="w-16 h-16 rounded-2xl shadow-md" />
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Driver Dashboard</h1>
-              <p className="text-base text-gray-600 mt-0.5">Hello, {currentDriver.name}</p>
+              <h1 className="text-3xl font-bold text-foreground">Driver Dashboard</h1>
+              <p className="text-base text-muted-foreground mt-0.5">Hello, {currentDriver.name}</p>
             </div>
           </div>
           <div className="flex gap-2">
