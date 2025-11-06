@@ -206,6 +206,14 @@ export function TasksBoard() {
                         <span className="font-medium">Created:</span> {new Date(task.created_at).toLocaleString()}
                       </span>
                     </div>
+                    {task.eta && (
+                      <div className="flex items-start gap-2">
+                        <Clock className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                        <span>
+                          <span className="font-medium">ETA:</span> {task.eta}
+                        </span>
+                      </div>
+                    )}
                     {task.passenger_name && (
                       <div className="flex items-start gap-2">
                         <User className="h-4 w-4 mt-0.5 text-muted-foreground" />
@@ -276,11 +284,11 @@ export function TasksBoard() {
                 </AccordionTrigger>
                 <AccordionContent className="px-4 pb-4 space-y-3">
                   <div className="space-y-2 text-sm">
-                    {(task.driver_name || task.driver_id) && (
+                    {task.driver_name && (
                       <div className="flex items-start gap-2">
                         <User className="h-4 w-4 mt-0.5 text-muted-foreground" />
                         <span>
-                          <span className="font-medium">Accepted by:</span> {task.driver_name || "Unknown"}
+                          <span className="font-medium">Accepted by:</span> {task.driver_name}
                         </span>
                       </div>
                     )}
@@ -290,6 +298,14 @@ export function TasksBoard() {
                         <span>
                           <span className="font-medium">Accepted:</span>{" "}
                           {new Date(task.accepted_at).toLocaleString()}
+                        </span>
+                      </div>
+                    )}
+                    {task.eta && (
+                      <div className="flex items-start gap-2">
+                        <Clock className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                        <span>
+                          <span className="font-medium">ETA:</span> {task.eta}
                         </span>
                       </div>
                     )}
@@ -371,11 +387,11 @@ export function TasksBoard() {
                 </AccordionTrigger>
                 <AccordionContent className="px-4 pb-4 space-y-3">
                   <div className="space-y-2 text-sm">
-                    {(task.driver_name || task.driver_id) && (
+                    {task.driver_name && (
                       <div className="flex items-start gap-2">
                         <User className="h-4 w-4 mt-0.5 text-muted-foreground" />
                         <span>
-                          <span className="font-medium">Completed by:</span> {task.driver_name || "Unknown"}
+                          <span className="font-medium">Completed by:</span> {task.driver_name}
                         </span>
                       </div>
                     )}
@@ -385,6 +401,14 @@ export function TasksBoard() {
                         <span>
                           <span className="font-medium">Completed:</span>{" "}
                           {new Date(task.completed_at).toLocaleString()}
+                        </span>
+                      </div>
+                    )}
+                    {task.eta && (
+                      <div className="flex items-start gap-2">
+                        <Clock className="h-4 w-4 mt-0.5 text-muted-foreground" />
+                        <span>
+                          <span className="font-medium">ETA:</span> {task.eta}
                         </span>
                       </div>
                     )}
