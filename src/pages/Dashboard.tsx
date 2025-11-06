@@ -458,7 +458,7 @@ export default function Dashboard() {
 
       <div className="container mx-auto px-4 py-8 max-w-3xl space-y-8">
         {/* Tabs for Tasks and Pick Ups */}
-        <Tabs defaultValue="tasks" className="w-full">
+        <Tabs defaultValue="pickups" className="w-full">
           <TabsList className="w-full justify-center gap-4 p-2">
             <TabsTrigger value="pickups" className="px-6 py-3 text-lg font-bold">Pick Ups</TabsTrigger>
             <TabsTrigger value="tasks" className="px-6 py-3 text-lg font-bold relative">
