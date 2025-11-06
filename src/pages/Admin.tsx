@@ -93,15 +93,20 @@ export default function Admin() {
       return;
     }
 
+    const passenger = (passenger_name || "").trim();
+    const pickup = (pickup_location || "").trim();
+    const dropoff = (dropoff_location || "").trim();
+    const cleanedNotes = (notes || "").trim();
+
     if (editingTask) {
       const { error } = await supabase
         .from("tasks")
         .update({ 
-          passenger_name: passenger_name || null,
-          pickup_location: pickup_location || null,
-          dropoff_location: dropoff_location || null,
+          passenger_name: passenger || "",
+          pickup_location: pickup || "",
+          dropoff_location: dropoff || "",
           task_name,
-          notes: notes || null,
+          notes: cleanedNotes || null,
           eta: deadline || null
         })
         .eq("id", editingTask.id);
@@ -115,11 +120,11 @@ export default function Admin() {
       const { error } = await supabase
         .from("tasks")
         .insert([{ 
-          passenger_name: passenger_name || null,
-          pickup_location: pickup_location || null,
-          dropoff_location: dropoff_location || null,
+          passenger_name: passenger || "",
+          pickup_location: pickup || "",
+          dropoff_location: dropoff || "",
           task_name,
-          notes: notes || null,
+          notes: cleanedNotes || null,
           eta: deadline || null,
           status: "available"
         }]);
