@@ -384,40 +384,28 @@ export default function Admin() {
       .map((d) => ({ ...d, name: d.name.trim(), address: d.address.trim() }))
       .filter((d) => d.name && d.address);
 
-    const payload = JSON.stringify(cleaned);
-
-    const { data: existing, error: selectError } = await supabase
-      .from("app_settings")
-      .select("id")
-      .eq("setting_key", "destinations")
-      .maybeSingle();
-
-    if (selectError) {
-      toast({ title: "Failed to save destinations", description: selectError.message, variant: "destructive" });
+    if (!passkey) {
+      toast({ title: "Re-enter admin passkey", description: "Your session needs the passkey to save.", variant: "destructive" });
       return;
     }
 
-    if (existing) {
-      const { error } = await supabase
-        .from("app_settings")
-        .update({ setting_value: payload })
-        .eq("setting_key", "destinations");
-      if (error) {
-        toast({ title: "Failed to save destinations", description: error.message, variant: "destructive" });
-        return;
-      }
-    } else {
-      const { error } = await supabase
-        .from("app_settings")
-        .insert([{ setting_key: "destinations", setting_value: payload }]);
-      if (error) {
-        toast({ title: "Failed to create destinations setting", description: error.message, variant: "destructive" });
-        return;
-      }
+    const { data, error } = await supabase.functions.invoke("save-destinations", {
+      body: { passkey, destinations: cleaned },
+    });
+
+    if (error) {
+      toast({ title: "Failed to save destinations", description: error.message, variant: "destructive" });
+      return;
     }
 
-    toast({ title: "Destinations saved" });
-    setSettings((prev: any) => ({ ...prev, destinations: payload }));
+    if (data?.success) {
+      toast({ title: "Destinations saved" });
+      // Reflect in local settings
+      const payload = JSON.stringify(cleaned);
+      setSettings((prev: any) => ({ ...prev, destinations: payload }));
+    } else {
+      toast({ title: "Failed to save destinations", description: data?.error || "Unknown error", variant: "destructive" });
+    }
   }
 
   if (!isAuthenticated) {
