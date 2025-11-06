@@ -383,14 +383,39 @@ export default function Admin() {
     const cleaned = destinations
       .map((d) => ({ ...d, name: d.name.trim(), address: d.address.trim() }))
       .filter((d) => d.name && d.address);
+
     const payload = JSON.stringify(cleaned);
-    const { error } = await supabase
+
+    const { data: existing, error: selectError } = await supabase
       .from("app_settings")
-      .upsert({ setting_key: "destinations", setting_value: payload });
-    if (error) {
-      toast({ title: "Failed to save destinations", variant: "destructive" });
+      .select("id")
+      .eq("setting_key", "destinations")
+      .maybeSingle();
+
+    if (selectError) {
+      toast({ title: "Failed to save destinations", description: selectError.message, variant: "destructive" });
       return;
     }
+
+    if (existing) {
+      const { error } = await supabase
+        .from("app_settings")
+        .update({ setting_value: payload })
+        .eq("setting_key", "destinations");
+      if (error) {
+        toast({ title: "Failed to save destinations", description: error.message, variant: "destructive" });
+        return;
+      }
+    } else {
+      const { error } = await supabase
+        .from("app_settings")
+        .insert([{ setting_key: "destinations", setting_value: payload }]);
+      if (error) {
+        toast({ title: "Failed to create destinations setting", description: error.message, variant: "destructive" });
+        return;
+      }
+    }
+
     toast({ title: "Destinations saved" });
     setSettings((prev: any) => ({ ...prev, destinations: payload }));
   }
