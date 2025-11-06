@@ -450,8 +450,8 @@ export default function Dashboard() {
         {/* Tabs for Tasks and Pick Ups */}
         <Tabs defaultValue="tasks" className="w-full">
           <TabsList className="w-full justify-center gap-4 p-2">
-            <TabsTrigger value="tasks" className="px-6 py-3 text-lg font-bold">Tasks</TabsTrigger>
             <TabsTrigger value="pickups" className="px-6 py-3 text-lg font-bold">Pick Ups</TabsTrigger>
+            <TabsTrigger value="tasks" className="px-6 py-3 text-lg font-bold">Tasks</TabsTrigger>
           </TabsList>
 
           <TabsContent value="tasks" className="mt-6">
