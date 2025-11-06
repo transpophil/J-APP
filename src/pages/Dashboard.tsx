@@ -14,7 +14,8 @@ import { LogOut, MapPin, Clock, CheckCircle2, AlertCircle, Navigation } from "lu
 import { TimeWheel } from "@/components/TimeWheel";
 import { TaskSection } from "@/components/TaskSection";
 import { TaskNotificationBell } from "@/components/TaskNotificationBell";
-import { AvailableTasksSection } from "@/components/AvailableTasksSection";
+import TasksBoard from "@/components/TasksBoard";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import logo from "@/assets/j-app-logo.jpg";
 import backgroundImage from "@/assets/background-image.png";
 
@@ -446,236 +447,244 @@ export default function Dashboard() {
       </header>
 
       <div className="container mx-auto px-4 py-8 max-w-3xl space-y-8">
-        {/* SECTION 1: Admin Tasks - Standalone */}
-        <div>
-          <AvailableTasksSection />
-        </div>
+        {/* Tabs for Tasks and Pick Ups */}
+        <Tabs defaultValue="tasks" className="w-full">
+          <TabsList className="w-full justify-center gap-4 p-2">
+            <TabsTrigger value="tasks" className="px-6 py-3 text-lg font-bold">Tasks</TabsTrigger>
+            <TabsTrigger value="pickups" className="px-6 py-3 text-lg font-bold">Pick Ups</TabsTrigger>
+          </TabsList>
 
-        {/* SECTION 2: Passenger Trip Management - Standalone */}
-        <div>
-        {tripMode === "pickup" ? (
-          // Pickup Flow - Simple Selection
-          <Card className="p-6 shadow-elevated bg-card/80 backdrop-blur-md border-border/50">
-            <div className="space-y-6">
-              <div className="text-center">
-                {currentTask ? (
-                  <>
-                    <Badge className="mb-2">Passenger</Badge>
-                    <h2 className="text-2xl font-bold text-foreground mb-2">Add Passenger</h2>
-                    <p className="text-muted-foreground">Selected passenger to add current trips</p>
-                  </>
-                ) : (
-                  <>
-                    <h2 className="text-2xl font-bold text-foreground mb-2">Start Trip</h2>
-                    <p className="text-muted-foreground">Select passengers and press Let's Go</p>
-                  </>
-                )}
-              </div>
+          <TabsContent value="tasks" className="mt-6">
+            <TasksBoard />
+          </TabsContent>
 
-              <div className="space-y-3">
-                <Label>Passengers *</Label>
-                <div className="space-y-2 max-h-80 overflow-y-auto pr-2">
-                  {passengers.map((passenger) => (
-                    <div
-                      key={passenger.id}
-                      onClick={() => togglePassengerSelection(passenger.id)}
-                      className={`p-4 border rounded-lg cursor-pointer transition-all ${
-                        selectedPassengers.includes(passenger.id)
-                          ? "border-primary bg-primary/10"
-                          : "border-border hover:border-primary/50"
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className={`mt-1 w-5 h-5 rounded border-2 flex items-center justify-center ${
-                          selectedPassengers.includes(passenger.id)
-                            ? "border-primary bg-primary"
-                            : "border-border"
-                        }`}>
-                          {selectedPassengers.includes(passenger.id) && (
-                            <CheckCircle2 className="h-4 w-4 text-primary-foreground" />
-                          )}
-                        </div>
-                        <div className="flex-1">
-                          <p className="font-semibold text-foreground">{passenger.name}</p>
-                          <p className="text-sm text-muted-foreground">{passenger.default_pickup_location}</p>
-                        </div>
+          <TabsContent value="pickups" className="mt-6">
+            {/* Passenger Trip Management - unchanged */}
+            <div>
+              {tripMode === "pickup" ? (
+                // Pickup Flow - Simple Selection
+                <Card className="p-6 shadow-elevated bg-card/80 backdrop-blur-md border-border/50">
+                  <div className="space-y-6">
+                    <div className="text-center">
+                      {currentTask ? (
+                        <>
+                          <Badge className="mb-2">Passenger</Badge>
+                          <h2 className="text-2xl font-bold text-foreground mb-2">Add Passenger</h2>
+                          <p className="text-muted-foreground">Selected passenger to add current trips</p>
+                        </>
+                      ) : (
+                        <>
+                          <h2 className="text-2xl font-bold text-foreground mb-2">Start Trip</h2>
+                          <p className="text-muted-foreground">Select passengers and press Let's Go</p>
+                        </>
+                      )}
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label>Passengers *</Label>
+                      <div className="space-y-2 max-h-80 overflow-y-auto pr-2">
+                        {passengers.map((passenger) => (
+                          <div
+                            key={passenger.id}
+                            onClick={() => togglePassengerSelection(passenger.id)}
+                            className={`p-4 border rounded-lg cursor-pointer transition-all ${
+                              selectedPassengers.includes(passenger.id)
+                                ? "border-primary bg-primary/10"
+                                : "border-border hover:border-primary/50"
+                            }`}
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className={`mt-1 w-5 h-5 rounded border-2 flex items-center justify-center ${
+                                selectedPassengers.includes(passenger.id)
+                                  ? "border-primary bg-primary"
+                                  : "border-border"
+                              }`}>
+                                {selectedPassengers.includes(passenger.id) && (
+                                  <CheckCircle2 className="h-4 w-4 text-primary-foreground" />
+                                )}
+                              </div>
+                              <div className="flex-1">
+                                <p className="font-semibold text-foreground">{passenger.name}</p>
+                                <p className="text-sm text-muted-foreground">{passenger.default_pickup_location}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
 
-              <div className="space-y-3">
-                {/* Google Maps Route Button */}
-                {selectedPassengers.length > 0 && (
-                  <Button 
-                    className="w-full" 
-                    variant="outline"
-                    onClick={openGoogleMapsRoute}
-                  >
-                    <Navigation className="mr-2 h-5 w-5" />
-                    View Route in Google Maps
-                  </Button>
-                )}
+                    <div className="space-y-3">
+                      {selectedPassengers.length > 0 && (
+                        <Button 
+                          className="w-full" 
+                          variant="outline"
+                          onClick={openGoogleMapsRoute}
+                        >
+                          <Navigation className="mr-2 h-5 w-5" />
+                          View Route in Google Maps
+                        </Button>
+                      )}
 
-                <Button 
-                  className="w-full" 
-                  size="lg"
-                  onClick={handleLetsGoClick}
-                  disabled={selectedPassengers.length === 0}
-                >
-                  <CheckCircle2 className="mr-2 h-5 w-5" />
-                  Let's Go
-                </Button>
-
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t border-border" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-card px-2 text-muted-foreground">or</span>
-                  </div>
-                </div>
-
-                {!showDelaySelection ? (
-                  <Button 
-                    variant="destructive" 
-                    className="w-full" 
-                    size="lg"
-                    onClick={() => setShowDelaySelection(true)}
-                    disabled={selectedPassengers.length === 0}
-                  >
-                    <AlertCircle className="mr-2 h-5 w-5" />
-                    Report Delay
-                  </Button>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
-                      <Label className="text-foreground font-semibold">Select delayed passenger</Label>
-                      <Select value={delayPassenger} onValueChange={setDelayPassenger}>
-                        <SelectTrigger className="mt-2">
-                          <SelectValue placeholder="Choose passenger" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {selectedPassengers.map((passengerId) => {
-                            const passenger = passengers.find(p => p.id === passengerId);
-                            if (!passenger) return null;
-                            return (
-                              <SelectItem key={passenger.id} value={passenger.id}>
-                                {passenger.name}
-                              </SelectItem>
-                            );
-                          })}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid grid-cols-2 gap-3">
                       <Button 
-                        variant="outline" 
-                        onClick={() => {
-                          setShowDelaySelection(false);
-                          setDelayPassenger("");
-                        }}
+                        className="w-full" 
+                        size="lg"
+                        onClick={handleLetsGoClick}
+                        disabled={selectedPassengers.length === 0}
                       >
-                        Cancel
+                        <CheckCircle2 className="mr-2 h-5 w-5" />
+                        Let's Go
                       </Button>
-                      <Button 
-                        variant="destructive"
-                        onClick={handleDelay}
-                        disabled={!delayPassenger}
-                      >
-                        Send Delay Notice
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </Card>
-        ) : (
-          // Travel Overview Screen
-          <Card className="p-6 shadow-elevated bg-card/80 backdrop-blur-md border-border/50">
-            <div className="space-y-6">
-              <div className="text-center">
-                <Badge className="mb-3">Trip In Progress</Badge>
-                <h2 className="text-2xl font-bold text-foreground mb-1">Travel Overview</h2>
-              </div>
 
-              <div className="space-y-4">
-                <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg">
-                  <div className="flex items-center gap-2 mb-2">
-                    <MapPin className="h-5 w-5 text-primary" />
-                    <span className="font-semibold text-foreground">DRIVER</span>
-                  </div>
-                  <p className="text-lg font-bold text-foreground">{currentDriver.name}</p>
-                </div>
-
-                <div className="p-4 bg-secondary/10 border border-secondary/20 rounded-lg">
-                  <div className="flex items-center gap-2 mb-3">
-                    <MapPin className="h-5 w-5 text-secondary" />
-                    <span className="font-semibold text-foreground">PASSENGERS</span>
-                  </div>
-                  {selectedPassengers.map((passengerId, index) => {
-                    const passenger = passengers.find(p => p.id === passengerId);
-                    if (!passenger) return null;
-                    return (
-                      <div key={passengerId} className={index > 0 ? "mt-3 pt-3 border-t border-secondary/20" : ""}>
-                        <p className="text-lg font-bold text-foreground">{passenger.name}</p>
-                        <p className="text-sm text-muted-foreground">#a {passenger.default_pickup_location}</p>
+                      <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                          <span className="w-full border-t border-border" />
+                        </div>
+                        <div className="relative flex justify-center text-xs uppercase">
+                          <span className="bg-card px-2 text-muted-foreground">or</span>
+                        </div>
                       </div>
-                    );
-                  })}
-                </div>
 
-                <div className="p-4 bg-muted/50 border border-border rounded-lg">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Clock className="h-5 w-5 text-foreground" />
-                    <span className="font-semibold text-foreground">ETA</span>
+                      {!showDelaySelection ? (
+                        <Button 
+                          variant="destructive" 
+                          className="w-full" 
+                          size="lg"
+                          onClick={() => setShowDelaySelection(true)}
+                          disabled={selectedPassengers.length === 0}
+                        >
+                          <AlertCircle className="mr-2 h-5 w-5" />
+                          Report Delay
+                        </Button>
+                      ) : (
+                        <div className="space-y-3">
+                          <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
+                            <Label className="text-foreground font-semibold">Select delayed passenger</Label>
+                            <Select value={delayPassenger} onValueChange={setDelayPassenger}>
+                              <SelectTrigger className="mt-2">
+                                <SelectValue placeholder="Choose passenger" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {selectedPassengers.map((passengerId) => {
+                                  const passenger = passengers.find(p => p.id === passengerId);
+                                  if (!passenger) return null;
+                                  return (
+                                    <SelectItem key={passenger.id} value={passenger.id}>
+                                      {passenger.name}
+                                    </SelectItem>
+                                  );
+                                })}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <Button 
+                              variant="outline" 
+                              onClick={() => {
+                                setShowDelaySelection(false);
+                                setDelayPassenger("");
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                            <Button 
+                              variant="destructive"
+                              onClick={handleDelay}
+                              disabled={!delayPassenger}
+                            >
+                              Send Delay Notice
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <p className="text-3xl font-bold text-foreground text-center">{currentTask?.eta}</p>
-                </div>
-              </div>
+                </Card>
+              ) : (
+                // Travel Overview Screen
+                <Card className="p-6 shadow-elevated bg-card/80 backdrop-blur-md border-border/50">
+                  <div className="space-y-6">
+                    <div className="text-center">
+                      <Badge className="mb-3">Trip In Progress</Badge>
+                      <h2 className="text-2xl font-bold text-foreground mb-1">Travel Overview</h2>
+                    </div>
 
-              <div className="grid grid-cols-3 gap-3">
-                <Button 
-                  className="w-full" 
-                  size="lg"
-                  onClick={handleFiveMinWarning}
-                  disabled={selectedPassengers.length === 0 || currentTask?.five_min_warning_sent_at != null}
-                >
-                  <Clock className="mr-2 h-5 w-5" />
-                  5 Min Warning
-                </Button>
-                <Button 
-                  variant="outline"
-                  className="w-full" 
-                  size="lg"
-                  onClick={handleAddPickup}
-                >
-                  <MapPin className="mr-2 h-5 w-5" />
-                  Add PickUp
-                </Button>
-                <Button 
-                  variant="default" 
-                  className="w-full" 
-                  size="lg"
-                  onClick={handleDropOff}
-                  disabled={selectedPassengers.length === 0}
-                >
-                  <CheckCircle2 className="mr-2 h-5 w-5" />
-                  Drop Off
-                </Button>
-              </div>
+                    <div className="space-y-4">
+                      <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <MapPin className="h-5 w-5 text-primary" />
+                          <span className="font-semibold text-foreground">DRIVER</span>
+                        </div>
+                        <p className="text-lg font-bold text-foreground">{currentDriver.name}</p>
+                      </div>
 
-              {currentTask?.five_min_warning_sent_at && (
-                <p className="text-sm text-center text-muted-foreground">
-                  ✓ 5-minute warning already sent
-                </p>
+                      <div className="p-4 bg-secondary/10 border border-secondary/20 rounded-lg">
+                        <div className="flex items-center gap-2 mb-3">
+                          <MapPin className="h-5 w-5 text-secondary" />
+                          <span className="font-semibold text-foreground">PASSENGERS</span>
+                        </div>
+                        {selectedPassengers.map((passengerId, index) => {
+                          const passenger = passengers.find(p => p.id === passengerId);
+                          if (!passenger) return null;
+                          return (
+                            <div key={passengerId} className={index > 0 ? "mt-3 pt-3 border-t border-secondary/20" : ""}>
+                              <p className="text-lg font-bold text-foreground">{passenger.name}</p>
+                              <p className="text-sm text-muted-foreground">#a {passenger.default_pickup_location}</p>
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      <div className="p-4 bg-muted/50 border border-border rounded-lg">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Clock className="h-5 w-5 text-foreground" />
+                          <span className="font-semibold text-foreground">ETA</span>
+                        </div>
+                        <p className="text-3xl font-bold text-foreground text-center">{currentTask?.eta}</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-3">
+                      <Button 
+                        className="w-full" 
+                        size="lg"
+                        onClick={handleFiveMinWarning}
+                        disabled={selectedPassengers.length === 0 || currentTask?.five_min_warning_sent_at != null}
+                      >
+                        <Clock className="mr-2 h-5 w-5" />
+                        5 Min Warning
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        className="w-full" 
+                        size="lg"
+                        onClick={handleAddPickup}
+                      >
+                        <MapPin className="mr-2 h-5 w-5" />
+                        Add PickUp
+                      </Button>
+                      <Button 
+                        variant="default" 
+                        className="w-full" 
+                        size="lg"
+                        onClick={handleDropOff}
+                        disabled={selectedPassengers.length === 0}
+                      >
+                        <CheckCircle2 className="mr-2 h-5 w-5" />
+                        Drop Off
+                      </Button>
+                    </div>
+
+                    {currentTask?.five_min_warning_sent_at && (
+                      <p className="text-sm text-center text-muted-foreground">
+                        ✓ 5-minute warning already sent
+                      </p>
+                    )}
+                  </div>
+                </Card>
               )}
             </div>
-          </Card>
-        )}
-      </div>
+          </TabsContent>
+        </Tabs>
 
       {/* ETA Input Dialog */}
       <Dialog open={showEtaDialog} onOpenChange={setShowEtaDialog}>
