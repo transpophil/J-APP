@@ -17,7 +17,6 @@ import TasksBoard from "@/components/TasksBoard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import logo from "@/assets/j-app-logo.jpg";
 import backgroundImage from "@/assets/background-image.png";
-import DestinationPickerDialog, { Destination } from "@/components/DestinationPickerDialog";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -30,10 +29,8 @@ export default function Dashboard() {
   const [delayPassenger, setDelayPassenger] = useState<string>("");
   const [showDelaySelection, setShowDelaySelection] = useState(false);
   const [showEtaDialog, setShowEtaDialog] = useState(false);
-  const [showDestinationDialog, setShowDestinationDialog] = useState(false);
   const [tripMode, setTripMode] = useState<"pickup" | "travel">("pickup");
   const [hasNewTasks, setHasNewTasks] = useState(false);
-  const [destinations, setDestinations] = useState<Destination[]>([]);
 
   useEffect(() => {
     if (!currentDriver) {
@@ -94,27 +91,6 @@ export default function Dashboard() {
       .select("*")
       .order("name");
     setPassengers(passengersData || []);
-
-    // Load destinations from app_settings (JSON string under key "destinations")
-    const { data: destSetting } = await supabase
-      .from("app_settings")
-      .select("setting_value")
-      .eq("setting_key", "destinations")
-      .maybeSingle();
-    if (destSetting?.setting_value) {
-      try {
-        const parsed = JSON.parse(destSetting.setting_value);
-        if (Array.isArray(parsed)) {
-          setDestinations(parsed);
-        } else {
-          setDestinations([]);
-        }
-      } catch {
-        setDestinations([]);
-      }
-    } else {
-      setDestinations([]);
-    }
 
     // Load current passenger trip task for this driver (passenger trips only - no task_name)
     const { data: current } = await supabase
@@ -253,15 +229,6 @@ export default function Dashboard() {
     setShowEtaDialog(false);
     setTripMode("travel");
     loadData();
-    // Prompt for destination selection to open navigation
-    if (destinations.length > 0) {
-      setShowDestinationDialog(true);
-    } else {
-      toast({
-        title: "No destinations available",
-        description: "Ask an admin to add destinations in the Admin panel.",
-      });
-    }
   }
 
   async function handleDelay() {
@@ -377,7 +344,7 @@ export default function Dashboard() {
     navigate("/login");
   }
 
-  // Function to open Google Maps with route (using selected passengers as waypoints, final destination optional)
+  // Function to open Google Maps with route
   function openGoogleMapsRoute() {
     if (selectedPassengers.length === 0) {
       toast({ title: "Bitte zuerst Passagiere auswählen", variant: "destructive" });
@@ -446,77 +413,6 @@ export default function Dashboard() {
           toast({
             title: "Standortzugriff verweigert",
             description: "Route wird ohne festen Startpunkt geöffnet.",
-          });
-          tryDeepLink(undefined);
-        },
-        { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
-      );
-    } else {
-      tryDeepLink(undefined);
-    }
-  }
-
-  // Open Google Maps with explicit destination after ETA confirmation
-  function openGoogleMapsRouteWithDestination(finalDestination: string) {
-    if (selectedPassengers.length === 0) {
-      toast({ title: "Please select passengers first", variant: "destructive" });
-      return;
-    }
-    const orderedLocations = selectedPassengers
-      .map((id) => passengers.find((p) => p.id === id)?.default_pickup_location)
-      .filter((loc): loc is string => Boolean(loc));
-    const waypointList = orderedLocations; // all pickups are waypoints; final destination is admin-selected
-    if (!finalDestination) {
-      toast({ title: "Invalid destination", variant: "destructive" });
-      return;
-    }
-
-    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-    const isAndroid = /Android/i.test(navigator.userAgent);
-
-    const buildWebUrl = (origin?: string) => {
-      return (
-        `https://www.google.com/maps/dir/?api=1` +
-        (origin ? `&origin=${encodeURIComponent(origin)}` : "") +
-        `&destination=${encodeURIComponent(finalDestination)}` +
-        (waypointList.length > 0 ? `&waypoints=${encodeURIComponent(waypointList.join("|"))}` : "") +
-        `&travelmode=driving`
-      );
-    };
-
-    const tryDeepLink = (origin?: string) => {
-      if (isIOS) {
-        const daddrChain = (waypointList.length > 0 ? [...waypointList, finalDestination] : [finalDestination])
-          .map((addr) => encodeURIComponent(addr))
-          .join("+to:");
-        const deepUrl =
-          `comgooglemaps://?directionsmode=driving&daddr=${daddrChain}` +
-          (origin ? `&saddr=${encodeURIComponent(origin)}` : "");
-        const fallbackUrl = buildWebUrl(origin);
-        window.location.href = deepUrl;
-        setTimeout(() => {
-          window.location.href = fallbackUrl;
-        }, 800);
-        return;
-      }
-      if (isAndroid) {
-        window.location.href = buildWebUrl(origin);
-        return;
-      }
-      window.location.href = buildWebUrl(origin);
-    };
-
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (pos) => {
-          const { latitude, longitude } = pos.coords;
-          const origin = `${latitude},${longitude}`;
-          tryDeepLink(origin);
-        },
-        () => {
-          toast({
-            title: "Location access denied",
-            description: "Opening route without a fixed start point.",
           });
           tryDeepLink(undefined);
         },
@@ -831,18 +727,7 @@ export default function Dashboard() {
         </DialogContent>
       </Dialog>
 
-      {/* Destination Picker Dialog */}
-      <DestinationPickerDialog
-        open={showDestinationDialog}
-        onOpenChange={setShowDestinationDialog}
-        destinations={destinations}
-        onSelect={(dest) => {
-          openGoogleMapsRouteWithDestination(dest.address);
-          setShowDestinationDialog(false);
-        }}
-      />
-
-       </div>
+      </div>
     </div>
     </div>
   );
