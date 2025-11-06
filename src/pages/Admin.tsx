@@ -667,7 +667,7 @@ export default function Admin() {
                               .update({ is_important: value })
                               .eq("id", passenger.id);
                             if (error) {
-                              toast({ title: "Failed to update passenger", variant: "destructive" });
+                              toast({ title: "Failed to update passenger", description: error.message, variant: "destructive" });
                               return;
                             }
                             setPassengers((prev) =>
