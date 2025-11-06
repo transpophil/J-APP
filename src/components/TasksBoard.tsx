@@ -130,6 +130,9 @@ export function TasksBoard() {
 
   // Open Google Maps route with current device position as origin to the task's pickup location
   function openTaskRoute(destination: string) {
+    const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const isAndroid = /Android/i.test(navigator.userAgent);
+
     const buildWebUrl = (origin?: string) => {
       return (
         `https://www.google.com/maps/dir/?api=1` +
@@ -139,23 +142,42 @@ export function TasksBoard() {
       );
     };
 
+    const tryDeepLink = (origin?: string) => {
+      if (isIOS) {
+        const deepUrl =
+          `comgooglemaps://?directionsmode=driving&daddr=${encodeURIComponent(destination)}` +
+          (origin ? `&saddr=${encodeURIComponent(origin)}` : "");
+        const fallbackUrl = buildWebUrl(origin);
+        window.location.href = deepUrl;
+        setTimeout(() => {
+          window.location.href = fallbackUrl;
+        }, 800);
+        return;
+      }
+      if (isAndroid) {
+        window.location.href = buildWebUrl(origin);
+        return;
+      }
+      window.open(buildWebUrl(origin), "_blank");
+    };
+
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           const origin = `${pos.coords.latitude},${pos.coords.longitude}`;
-          window.open(buildWebUrl(origin), "_blank");
+          tryDeepLink(origin);
         },
         () => {
           toast({
             title: "Location access denied",
             description: "Opening route without a fixed start point.",
           });
-          window.open(buildWebUrl(undefined), "_blank");
+          tryDeepLink(undefined);
         },
         { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
       );
     } else {
-      window.open(buildWebUrl(undefined), "_blank");
+      tryDeepLink(undefined);
     }
   }
 
