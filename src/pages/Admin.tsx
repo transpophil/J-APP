@@ -47,6 +47,8 @@ export default function Admin() {
     name: "",
     default_pickup_location: "",
   });
+  type Destination = { id: string; name: string; address: string };
+  const [destinations, setDestinations] = useState<Destination[]>([]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -84,6 +86,18 @@ export default function Admin() {
       settingsMap[s.setting_key] = s.setting_value;
     });
     setSettings(settingsMap);
+
+    // Parse destinations JSON if available
+    try {
+      if (settingsMap.destinations) {
+        const parsed = JSON.parse(settingsMap.destinations);
+        setDestinations(Array.isArray(parsed) ? parsed : []);
+      } else {
+        setDestinations([]);
+      }
+    } catch {
+      setDestinations([]);
+    }
   }
 
   async function createOrUpdateTask() {
@@ -348,6 +362,39 @@ export default function Admin() {
     await loadData();
   }
 
+  function addDestination() {
+    setDestinations((prev) => [
+      ...prev,
+      { id: Math.random().toString(36).slice(2), name: "", address: "" },
+    ]);
+  }
+
+  function updateDestination(id: string, field: "name" | "address", value: string) {
+    setDestinations((prev) =>
+      prev.map((d) => (d.id === id ? { ...d, [field]: value } : d))
+    );
+  }
+
+  function removeDestination(id: string) {
+    setDestinations((prev) => prev.filter((d) => d.id !== id));
+  }
+
+  async function saveDestinations() {
+    const cleaned = destinations
+      .map((d) => ({ ...d, name: d.name.trim(), address: d.address.trim() }))
+      .filter((d) => d.name && d.address);
+    const payload = JSON.stringify(cleaned);
+    const { error } = await supabase
+      .from("app_settings")
+      .upsert({ setting_key: "destinations", setting_value: payload });
+    if (error) {
+      toast({ title: "Failed to save destinations", variant: "destructive" });
+      return;
+    }
+    toast({ title: "Destinations saved" });
+    setSettings((prev: any) => ({ ...prev, destinations: payload }));
+  }
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-background via-muted/20 to-background">
@@ -400,10 +447,11 @@ export default function Admin() {
 
       <div className="container mx-auto px-4 py-8 max-w-5xl">
         <Tabs defaultValue="tasks" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 gap-1">
+          <TabsList className="grid w-full grid-cols-6 gap-1">
             <TabsTrigger value="tasks" className="text-xs sm:text-sm">Tasks</TabsTrigger>
             <TabsTrigger value="drivers" className="text-xs sm:text-sm">Drivers</TabsTrigger>
             <TabsTrigger value="passengers" className="text-xs sm:text-sm">Passengers</TabsTrigger>
+            <TabsTrigger value="destinations" className="text-xs sm:text-sm">Destinations</TabsTrigger>
             <TabsTrigger value="templates" className="text-xs sm:text-sm">Templates</TabsTrigger>
             <TabsTrigger value="settings" className="text-xs sm:text-sm">Settings</TabsTrigger>
           </TabsList>
@@ -667,6 +715,54 @@ export default function Admin() {
                   </div>
                 </Card>
               ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="destinations" className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-2xl font-bold">Manage Destinations</h2>
+              <Button onClick={addDestination}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Destination
+              </Button>
+            </div>
+            {destinations.length === 0 ? (
+              <Card className="p-6 text-center text-muted-foreground">
+                No destinations yet. Click "Add Destination" to create one.
+              </Card>
+            ) : (
+              <div className="space-y-3">
+                {destinations.map((d) => (
+                  <Card key={d.id} className="p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label>Destination Name</Label>
+                        <Input
+                          value={d.name}
+                          onChange={(e) => updateDestination(d.id, "name", e.target.value)}
+                          placeholder="e.g., School, Home, Office"
+                        />
+                      </div>
+                      <div>
+                        <Label>Address</Label>
+                        <Input
+                          value={d.address}
+                          onChange={(e) => updateDestination(d.id, "address", e.target.value)}
+                          placeholder="e.g., 123 Main St, City"
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-3 flex justify-end">
+                      <Button variant="destructive" size="icon" onClick={() => removeDestination(d.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )}
+            <div className="flex justify-end">
+              <Button onClick={saveDestinations}>Save Destinations</Button>
             </div>
           </TabsContent>
 
