@@ -17,7 +17,6 @@ import TasksBoard from "@/components/TasksBoard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import logo from "@/assets/j-app-logo.jpg";
 import backgroundImage from "@/assets/background-image.png";
-import { useCrew } from "@/contexts/CrewContext";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -32,8 +31,9 @@ export default function Dashboard() {
   const [showEtaDialog, setShowEtaDialog] = useState(false);
   const [tripMode, setTripMode] = useState<"pickup" | "travel">("pickup");
   const [hasNewTasks, setHasNewTasks] = useState(false);
-  const { crewMembers } = useCrew();
+  const [crewMembers, setCrewMembers] = useState<any[]>([]);
 
+  // Subscribe to realtime updates for tasks and crew_members
   useEffect(() => {
     if (!currentDriver) {
       navigate("/login");
@@ -42,12 +42,15 @@ export default function Dashboard() {
     loadData();
     loadNewTasks();
 
-    // Set up realtime subscription
     const channel = supabase
-      .channel("tasks_changes")
+      .channel("tasks_and_crew_changes")
       .on("postgres_changes", { event: "*", schema: "public", table: "tasks" }, () => {
         loadData();
         loadNewTasks();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "crew_members" }, () => {
+        // Reload crew list when anyone edits it
+        loadData();
       })
       .subscribe();
 
@@ -92,7 +95,7 @@ export default function Dashboard() {
       .from("passengers")
       .select("*")
       .order("name");
-    // Apply order from app_settings (if exists)
+    // Apply saved order (unchanged)
     let orderedPassengers = passengersData || [];
     const { data: orderSetting } = await supabase
       .from("app_settings")
@@ -110,12 +113,17 @@ export default function Dashboard() {
           return (a.name || "").localeCompare(b.name || "");
         });
       } catch {
-        // ignore parse errors, keep default order
+        // ignore parse errors
       }
     }
     setPassengers(orderedPassengers);
-    
-    // Crew members are managed locally via CrewContext (no Supabase call)
+
+    // Load crew members from Supabase
+    const { data: crewData } = await supabase
+      .from("crew_members")
+      .select("*")
+      .order("name");
+    setCrewMembers(crewData || []);
 
     // Load current passenger trip task for this driver (passenger trips only - no task_name)
     const { data: current } = await supabase

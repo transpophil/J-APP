@@ -12,7 +12,6 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Plus, Trash2, Edit } from "lucide-react";
 import logo from "@/assets/j-app-logo.jpg";
-import { useCrew } from "@/contexts/CrewContext";
 import PassengerSortable from "@/components/PassengerSortable";
 
 export default function Admin() {
@@ -52,7 +51,7 @@ export default function Admin() {
     default_pickup_location: "",
   });
   const [crewForm, setCrewForm] = useState({ name: "", role: "", phone: "" });
-  const { crewMembers, addCrewMember, updateCrewMember, deleteCrewMember } = useCrew();
+  const [crewMembers, setCrewMembers] = useState<any[]>([]);
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -105,6 +104,12 @@ export default function Admin() {
     }
     setPassengers(orderedPassengers);
     setTemplates(templatesRes.data || []);
+
+    const { data: crewData } = await supabase
+      .from("crew_members")
+      .select("*")
+      .order("name");
+    setCrewMembers(crewData || []);
   }
 
   async function createOrUpdateTask() {
@@ -272,20 +277,39 @@ export default function Admin() {
       return;
     }
     if (editingCrew) {
-      updateCrewMember(editingCrew.id, { name, role: role || null, phone });
+      const { error } = await supabase
+        .from("crew_members")
+        .update({ name, role: role || null, phone, updated_at: new Date().toISOString() })
+        .eq("id", editingCrew.id);
+      if (error) {
+        toast({ title: "Failed to update crew member", description: error.message, variant: "destructive" });
+        return;
+      }
       toast({ title: "Crew member updated" });
     } else {
-      addCrewMember({ name, role: role || null, phone });
+      const { error } = await supabase
+        .from("crew_members")
+        .insert([{ name, role: role || null, phone }]);
+      if (error) {
+        toast({ title: "Failed to add crew member", description: error.message, variant: "destructive" });
+        return;
+      }
       toast({ title: "Crew member added" });
     }
     setShowCrewDialog(false);
     setEditingCrew(null);
     setCrewForm({ name: "", role: "", phone: "" });
+    loadData();
   }
 
   async function deleteCrew(id: string) {
-    deleteCrewMember(id);
+    const { error } = await supabase.from("crew_members").delete().eq("id", id);
+    if (error) {
+      toast({ title: "Failed to delete crew member", description: error.message, variant: "destructive" });
+      return;
+    }
     toast({ title: "Crew member deleted" });
+    loadData();
   }
 
   async function updateTemplate(id: string, templateText: string) {
