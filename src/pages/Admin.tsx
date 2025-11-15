@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Plus, Trash2, Edit } from "lucide-react";
 import logo from "@/assets/j-app-logo.jpg";
 import { useCrew } from "@/contexts/CrewContext";
+import PassengerSortable from "@/components/PassengerSortable";
 
 export default function Admin() {
   const navigate = useNavigate();
@@ -80,15 +81,30 @@ export default function Admin() {
     ]);
 
     setDrivers(driversRes.data || []);
-    setPassengers(passengersRes.data || []);
-    setTasks(tasksRes.data || []);
-    setTemplates(templatesRes.data || []);
-
+    // Build settings map and apply passenger order if present
     const settingsMap: any = {};
     (settingsRes.data || []).forEach((s) => {
       settingsMap[s.setting_key] = s.setting_value;
     });
     setSettings(settingsMap);
+    let orderedPassengers = passengersRes.data || [];
+    const orderStr = settingsMap["passenger_order"];
+    if (orderStr) {
+      try {
+        const orderIds: string[] = JSON.parse(orderStr);
+        const indexMap = new Map(orderIds.map((id, i) => [id, i]));
+        orderedPassengers.sort((a: any, b: any) => {
+          const ai = indexMap.has(a.id) ? (indexMap.get(a.id) as number) : Number.POSITIVE_INFINITY;
+          const bi = indexMap.has(b.id) ? (indexMap.get(b.id) as number) : Number.POSITIVE_INFINITY;
+          if (ai !== bi) return ai - bi;
+          return (a.name || "").localeCompare(b.name || "");
+        });
+      } catch {
+        // ignore parse errors, keep default order
+      }
+    }
+    setPassengers(orderedPassengers);
+    setTemplates(templatesRes.data || []);
   }
 
   async function createOrUpdateTask() {
@@ -374,6 +390,37 @@ export default function Admin() {
 
     toast({ title: `Exported ${older.length} tasks and kept the latest 20.` });
     await loadData();
+  }
+
+  async function savePassengerOrder() {
+    const orderIds = passengers.map((p) => p.id);
+    const value = JSON.stringify(orderIds);
+    // Try to find existing setting
+    const { data: existing } = await supabase
+      .from("app_settings")
+      .select("*")
+      .eq("setting_key", "passenger_order")
+      .maybeSingle();
+
+    if (existing) {
+      const { error } = await supabase
+        .from("app_settings")
+        .update({ setting_value: value })
+        .eq("setting_key", "passenger_order");
+      if (error) {
+        toast({ title: "Failed to save order", description: error.message, variant: "destructive" });
+        return;
+      }
+    } else {
+      const { error } = await supabase
+        .from("app_settings")
+        .insert([{ setting_key: "passenger_order", setting_value: value }]);
+      if (error) {
+        toast({ title: "Failed to save order", description: error.message, variant: "destructive" });
+        return;
+      }
+    }
+    toast({ title: "Passenger order saved" });
   }
 
   if (!isAuthenticated) {
@@ -664,38 +711,23 @@ export default function Admin() {
                 Add Passenger
               </Button>
             </div>
-            <div className="space-y-3">
-              {passengers.map((passenger) => (
-                <Card key={passenger.id} className="p-4">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-lg">{passenger.name}</h3>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        <span className="font-medium">Default Pickup:</span> {passenger.default_pickup_location}
-                      </p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button
-                        size="icon"
-                        variant="outline"
-                        onClick={() => {
-                          setEditingPassenger(passenger);
-                          setPassengerForm({
-                            name: passenger.name,
-                            default_pickup_location: passenger.default_pickup_location,
-                          });
-                          setShowPassengerDialog(true);
-                        }}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button size="icon" variant="destructive" onClick={() => deletePassenger(passenger.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </Card>
-              ))}
+            <PassengerSortable
+              passengers={passengers}
+              onReorder={(next) => setPassengers(next)}
+              onEdit={(passenger) => {
+                setEditingPassenger(passenger);
+                setPassengerForm({
+                  name: passenger.name,
+                  default_pickup_location: passenger.default_pickup_location,
+                });
+                setShowPassengerDialog(true);
+              }}
+              onDelete={(id) => deletePassenger(id)}
+            />
+            <div className="flex justify-end">
+              <Button variant="outline" onClick={savePassengerOrder}>
+                Save Order
+              </Button>
             </div>
           </TabsContent>
 

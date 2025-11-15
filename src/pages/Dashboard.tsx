@@ -92,7 +92,28 @@ export default function Dashboard() {
       .from("passengers")
       .select("*")
       .order("name");
-    setPassengers(passengersData || []);
+    // Apply order from app_settings (if exists)
+    let orderedPassengers = passengersData || [];
+    const { data: orderSetting } = await supabase
+      .from("app_settings")
+      .select("setting_value")
+      .eq("setting_key", "passenger_order")
+      .maybeSingle();
+    if (orderSetting?.setting_value) {
+      try {
+        const orderIds: string[] = JSON.parse(orderSetting.setting_value);
+        const indexMap = new Map(orderIds.map((id, i) => [id, i]));
+        orderedPassengers.sort((a: any, b: any) => {
+          const ai = indexMap.has(a.id) ? (indexMap.get(a.id) as number) : Number.POSITIVE_INFINITY;
+          const bi = indexMap.has(b.id) ? (indexMap.get(b.id) as number) : Number.POSITIVE_INFINITY;
+          if (ai !== bi) return ai - bi;
+          return (a.name || "").localeCompare(b.name || "");
+        });
+      } catch {
+        // ignore parse errors, keep default order
+      }
+    }
+    setPassengers(orderedPassengers);
     
     // Crew members are managed locally via CrewContext (no Supabase call)
 
