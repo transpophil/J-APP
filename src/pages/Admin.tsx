@@ -50,6 +50,7 @@ export default function Admin() {
     default_pickup_location: "",
   });
   const [crewForm, setCrewForm] = useState({ name: "", role: "", phone: "" });
+  const [crewMembers, setCrewMembers] = useState<any[]>([]);
 
   useEffect(() => {
     if (isAuthenticated) {
