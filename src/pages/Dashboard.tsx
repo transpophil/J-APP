@@ -17,6 +17,7 @@ import TasksBoard from "@/components/TasksBoard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import logo from "@/assets/j-app-logo.jpg";
 import backgroundImage from "@/assets/background-image.png";
+import { useCrew } from "@/contexts/CrewContext";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -31,7 +32,7 @@ export default function Dashboard() {
   const [showEtaDialog, setShowEtaDialog] = useState(false);
   const [tripMode, setTripMode] = useState<"pickup" | "travel">("pickup");
   const [hasNewTasks, setHasNewTasks] = useState(false);
-  const [crewMembers, setCrewMembers] = useState<any[]>([]);
+  const { crewMembers } = useCrew();
 
   useEffect(() => {
     if (!currentDriver) {
@@ -93,12 +94,7 @@ export default function Dashboard() {
       .order("name");
     setPassengers(passengersData || []);
     
-    // Load crew members
-    const { data: crewData } = await supabase
-      .from("crew_members")
-      .select("*")
-      .order("name");
-    setCrewMembers(crewData || []);
+    // Crew members are managed locally via CrewContext (no Supabase call)
 
     // Load current passenger trip task for this driver (passenger trips only - no task_name)
     const { data: current } = await supabase
