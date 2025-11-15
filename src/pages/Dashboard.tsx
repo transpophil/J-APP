@@ -34,17 +34,6 @@ export default function Dashboard() {
   const [hasNewTasks, setHasNewTasks] = useState(false);
   const { crewMembers } = useCrew();
 
-  function sortPassengersByName(list: any[]) {
-    return [...(list || [])].sort((a, b) => {
-      const aName = (a.name || "").trim();
-      const bName = (b.name || "").trim();
-      const aStartsNum = /^\d/.test(aName);
-      const bStartsNum = /^\d/.test(bName);
-      if (aStartsNum !== bStartsNum) return aStartsNum ? -1 : 1;
-      return aName.localeCompare(bName, undefined, { sensitivity: "base", numeric: true });
-    });
-  }
-
   useEffect(() => {
     if (!currentDriver) {
       navigate("/login");
@@ -103,7 +92,7 @@ export default function Dashboard() {
       .from("passengers")
       .select("*")
       .order("name");
-    setPassengers(sortPassengersByName(passengersData || []));
+    setPassengers(passengersData || []);
     
     // Crew members are managed locally via CrewContext (no Supabase call)
 
@@ -514,7 +503,7 @@ export default function Dashboard() {
                     <div className="space-y-3">
                       <Label>Passengers *</Label>
                       <div className="space-y-2 max-h-80 overflow-y-auto pr-2">
-                        {passengers.map((passenger, index) => (
+                        {passengers.map((passenger) => (
                           <div
                             key={passenger.id}
                             onClick={() => togglePassengerSelection(passenger.id)}
@@ -535,10 +524,7 @@ export default function Dashboard() {
                                 )}
                               </div>
                               <div className="flex-1">
-                                <div className="flex items-center gap-2">
-                                  <Badge variant="outline">{index + 1}</Badge>
-                                  <p className="font-semibold text-foreground">{passenger.name}</p>
-                                </div>
+                                <p className="font-semibold text-foreground">{passenger.name}</p>
                                 <p className="text-sm text-muted-foreground">{passenger.default_pickup_location}</p>
                               </div>
                             </div>
